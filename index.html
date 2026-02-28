@@ -53,7 +53,7 @@
     }
 
     .topbar{
-      max-width:1240px;
+      max-width: 1600px;
       margin: 18px auto 10px;
       padding: 0 16px;
     }
@@ -67,22 +67,17 @@
       -webkit-background-clip:text;
       color:transparent;
     }
-    .subtitle{
-      margin:6px 0 0;
-      color:var(--muted);
-      max-width: 820px;
-      font-size: .92rem;
-      line-height:1.35;
-    }
 
+    /* LAYOUT PRINCIPAL : graph prend le max */
     .app{
-      max-width:1240px;
-      margin: 0 auto 26px;
-      padding: 0 16px 10px;
+      max-width: 1600px;
+      margin: 0 auto 20px;
+      padding: 0 16px 16px;
       display:grid;
-      grid-template-columns: 290px minmax(0,1fr) 360px;
-      gap:16px;
-      align-items:start;
+      grid-template-columns: minmax(0, 1fr) clamp(300px, 28vw, 420px); /* graph flexible + panel responsive */
+      gap: 16px;
+      align-items: stretch;
+      min-height: calc(100vh - 86px); /* occupe l'écran */
     }
     @media (max-width: 1080px){
       .app{ grid-template-columns: 1fr; }
@@ -98,28 +93,14 @@
       overflow:hidden;
     }
 
-    .nav{
-      padding: 12px;
-      position:sticky;
-      top:12px;
-    }
-    @media (max-width:1080px){
-      .nav{ position:relative; top:auto; }
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      padding: 10px 12px;
-      border-radius: var(--radius-lg);
-      background: rgba(2,6,23,0.30);
-      border: 1px solid rgba(148,163,184,0.14);
-      color: var(--muted);
-      font-size: .86rem;
-    }
-
     .center, .panel{ padding: 14px 14px 16px; }
+
+    /* CENTRE = colonne flex, chart prend le restant */
+    .center{
+      display:flex;
+      flex-direction:column;
+      min-height: calc(100vh - 86px);
+    }
 
     .sectionTitle{
       margin: 0 0 8px;
@@ -133,6 +114,70 @@
       border-radius: 999px;
       background: linear-gradient(180deg, var(--aqua), var(--violet));
       box-shadow: 0 0 18px rgba(34,211,238,0.20);
+    }
+
+    .chartWrap{
+      margin-top: 10px;
+      border-radius: var(--radius-xl);
+      border: 1px solid rgba(148,163,184,0.14);
+      background: rgba(2,6,23,0.20);
+      padding: 10px;
+      box-shadow: 0 22px 70px rgba(0,0,0,0.45);
+      overflow:hidden;
+      flex: 1;                 /* <-- prend l'espace dispo */
+      min-height: 340px;       /* sécurité */
+    }
+
+    /* IMPORTANT : le canvas remplit le conteneur */
+    #chart{
+      width:100% !important;
+      height:100% !important;
+      max-height:none !important;
+      display:block;
+    }
+
+    .statusRow{
+      margin-top: 10px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius:999px;
+      border: 1px solid rgba(148,163,184,0.18);
+      background: rgba(2,6,23,0.26);
+      color: var(--muted);
+      font-size:.78rem;
+    }
+    .dot{
+      width:7px; height:7px;
+      border-radius:999px;
+      background: var(--aqua);
+      box-shadow: 0 0 16px rgba(34,211,238,0.35);
+    }
+    .danger{ color: var(--rose); font-weight: 650; }
+
+    /* PANEL : sticky + scroll indépendant sur desktop */
+    .panel{
+      position: sticky;
+      top: 12px;
+      max-height: calc(100vh - 24px);
+      overflow: auto;
+    }
+    @media (max-width: 1080px){
+      .center{ min-height: calc(100vh - 86px); }
+      .panel{
+        position: relative;
+        top: auto;
+        max-height: none;
+        overflow: visible;
+      }
     }
 
     label{
@@ -166,44 +211,6 @@
     @media (max-width:1080px){
       .grid2{ grid-template-columns: 1fr; }
     }
-
-    .chartWrap{
-      margin-top: 10px;
-      border-radius: var(--radius-xl);
-      border: 1px solid rgba(148,163,184,0.14);
-      background: rgba(2,6,23,0.20);
-      padding: 10px;
-      box-shadow: 0 22px 70px rgba(0,0,0,0.45);
-      overflow:hidden;
-    }
-    canvas{ width:100%; max-height: 430px; }
-
-    .statusRow{
-      margin-top: 10px;
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      align-items:center;
-      justify-content:space-between;
-    }
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding: 6px 10px;
-      border-radius:999px;
-      border: 1px solid rgba(148,163,184,0.18);
-      background: rgba(2,6,23,0.26);
-      color: var(--muted);
-      font-size:.78rem;
-    }
-    .dot{
-      width:7px; height:7px;
-      border-radius:999px;
-      background: var(--aqua);
-      box-shadow: 0 0 16px rgba(34,211,238,0.35);
-    }
-    .danger{ color: var(--rose); font-weight: 650; }
 
     /* Segments */
     .segments{
@@ -333,30 +340,23 @@
       transform: translateY(-1px);
       box-shadow: 0 22px 60px rgba(34,211,238,0.25);
     }
-
-    .mini{
-      margin-top: 10px;
-      font-size: .78rem;
-      color: var(--muted);
-      line-height:1.35;
-    }
   </style>
 
-  <!-- ✅ Chart.js correctement chargé -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
   <header class="topbar">
-    <h1 class="title"><span>Simulateur FIRE</span> – VT & Retraits</h1>
+    <h1 class="title"><span>Simulateur FIRE</span> – VT &amp; Retraits</h1>
   </header>
 
   <div class="app">
-
-    <!-- Colonne centrale (compréhension) -->
+    <!-- Colonne centrale (graph) -->
     <main class="glass center">
       <h2 class="sectionTitle"><span class="bar"></span> Courbe du capital</h2>
-      <div class="chartWrap"><canvas id="chart"></canvas></div>
+      <div class="chartWrap">
+        <canvas id="chart"></canvas>
+      </div>
 
       <div class="statusRow">
         <div class="pill"><span class="dot"></span><span id="summary">—</span></div>
@@ -364,7 +364,7 @@
       </div>
     </main>
 
-    <!-- Colonne droite (contrôle) -->
+    <!-- Colonne droite (paramètres) -->
     <aside class="glass panel">
       <h2 class="sectionTitle"><span class="bar"></span> Paramètres</h2>
 
@@ -401,26 +401,40 @@
       <label>Année début des retraits
         <input id="wrStart" type="number" value="2043" min="1900" max="2200" />
       </label>
-      <h2 class="sectionTitle" style="margin-top:14px;"><span class="bar"></span> Segments </h2>
+
+      <h2 class="sectionTitle" style="margin-top:14px;"><span class="bar"></span> Segments</h2>
       <div id="segments" class="segments"></div>
       <button class="addBtn" type="button" id="addSegment">＋ Ajouter un segment</button>
     </aside>
   </div>
 
   <script>
+    // UUID fallback (compat)
+    const uuid = () =>
+      (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+      : ('id-' + Math.random().toString(16).slice(2) + Date.now().toString(16));
+
     // -----------------------------
     // State : segments (plages)
     // -----------------------------
     let segments = [
-      { id: crypto.randomUUID(), from: 2025, to: 2039, monthly: 3340, annual: 7500 },
-      { id: crypto.randomUUID(), from: 2040, to: 2060, monthly: 0, annual: 0 }
+      { id: uuid(), from: 2025, to: 2039, monthly: 3340, annual: 7500 },
+      { id: uuid(), from: 2040, to: 2060, monthly: 0, annual: 0 }
     ];
 
     const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-    const num = (id) => parseFloat(document.getElementById(id).value) || 0;
-    const intv = (id) => parseInt(document.getElementById(id).value, 10);
+    const num = (id) => {
+      const el = document.getElementById(id);
+      if (!el) return 0;
+      return parseFloat(el.value) || 0;
+    };
+    const intv = (id) => {
+      const el = document.getElementById(id);
+      if (!el) return 0;
+      return parseInt(el.value, 10);
+    };
 
-    // Debounce (tout dynamique, sans violence)
+    // Debounce : tout dynamique, mais calme
     let t = null;
     function scheduleSim(){
       if(t) clearTimeout(t);
@@ -428,7 +442,7 @@
     }
 
     // -----------------------------
-    // Segment rule : dernier segment gagne
+    // Règle segment : dernier segment gagne
     // -----------------------------
     function getRuleForYear(year){
       for(let i = segments.length - 1; i >= 0; i--){
@@ -437,17 +451,17 @@
       }
       return null;
     }
-    function monthlyForYear(year, def){
+    function monthlyForYear(year){
       const r = getRuleForYear(year);
-      return r ? (parseFloat(r.monthly) || 0) : def;
+      return r ? (parseFloat(r.monthly) || 0) : 0;
     }
-    function annualForYear(year, def){
+    function annualForYear(year){
       const r = getRuleForYear(year);
-      return r ? (parseFloat(r.annual) || 0) : def;
+      return r ? (parseFloat(r.annual) || 0) : 0;
     }
 
     // -----------------------------
-    // UI : render segments (UNIQUEMENT quand nécessaire)
+    // UI : render segments
     // -----------------------------
     function renderSegments(){
       const wrap = document.getElementById('segments');
@@ -495,7 +509,7 @@
         updateFillForSegment(s.id, minY, maxY);
       });
 
-      // Delete
+      // Supprimer segment
       wrap.querySelectorAll('button[data-del]').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.dataset.del;
@@ -505,7 +519,7 @@
         });
       });
 
-      // Range sliders
+      // Sliders
       wrap.querySelectorAll('input[type="range"]').forEach(r => {
         r.addEventListener('input', () => {
           const id = r.dataset.id;
@@ -517,7 +531,10 @@
           if(kind === 'from') seg.from = v;
           if(kind === 'to')   seg.to   = v;
 
-          if(seg.from > seg.to){ const tmp = seg.from; seg.from = seg.to; seg.to = tmp; }
+          // Garantit from <= to
+          if(seg.from > seg.to){
+            const tmp = seg.from; seg.from = seg.to; seg.to = tmp;
+          }
 
           document.getElementById(`fromLabel-${id}`).textContent = seg.from;
           document.getElementById(`toLabel-${id}`).textContent   = seg.to;
@@ -527,7 +544,7 @@
         });
       });
 
-      // Monthly / Annual inputs
+      // Inputs mensuel/annuel
       wrap.querySelectorAll('input[type="number"][data-field]').forEach(inp => {
         inp.addEventListener('input', () => {
           const id = inp.dataset.id;
@@ -553,18 +570,21 @@
       fill.style.right = `${clamp(right, 0, 100)}%`;
     }
 
+    // Ajouter segment : copie les montants du dernier segment (pas de default)
     document.getElementById('addSegment').addEventListener('click', () => {
       const startY = clamp(intv('startYear'), 1900, 2200);
       const endY   = clamp(intv('endYear'),   1900, 2200);
       const minY = Math.min(startY, endY);
       const maxY = Math.max(startY, endY);
 
+      const last = segments.length ? segments[segments.length - 1] : null;
+
       segments.push({
-        id: crypto.randomUUID(),
+        id: uuid(),
         from: minY,
         to: maxY,
-        monthly: num('defaultMonthly'),
-        annual: num('defaultAnnual')
+        monthly: last ? (parseFloat(last.monthly) || 0) : 0,
+        annual:  last ? (parseFloat(last.annual)  || 0) : 0
       });
 
       renderSegments();
@@ -575,8 +595,10 @@
     // Chart
     // -----------------------------
     let chart = null;
+
     function ensureChart(){
       if(chart) return;
+
       const ctx = document.getElementById('chart').getContext('2d');
       chart = new Chart(ctx, {
         type: 'line',
@@ -605,6 +627,7 @@
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false, // <-- clé pour que le canvas remplisse .chartWrap
           interaction: { mode: 'index', intersect: false },
           plugins: {
             legend: { labels: { color: '#e5e7eb', font: { size: 11 } } },
@@ -633,7 +656,7 @@
     }
 
     // -----------------------------
-    // Simulation (100% dynamique)
+    // Simulation
     // -----------------------------
     function runSim(){
       const startY = clamp(intv('startYear'), 1900, 2200);
@@ -648,8 +671,6 @@
       const wrMode = document.getElementById('wrMode').value;
 
       const initial = num('initial');
-      const defM = num('defaultMonthly');
-      const defA = num('defaultAnnual');
 
       let vt = initial;
       const monthlyRate = rate / 12;
@@ -658,23 +679,23 @@
       let vtWrBase = null;
       if(wrMode === 'percentBase' && wrStart >= sY && wrStart <= eY){
         let tmp = initial;
-        for(let y=sY; y<=eY; y++){
-          const mContr = monthlyForYear(y, defM);
-          for(let m=0; m<12; m++) tmp = tmp * (1 + monthlyRate) + mContr;
-          tmp += annualForYear(y, defA);
+        for(let y = sY; y <= eY; y++){
+          const mContr = monthlyForYear(y);
+          for(let m = 0; m < 12; m++) tmp = tmp * (1 + monthlyRate) + mContr;
+          tmp += annualForYear(y);
           if(y === wrStart){ vtWrBase = tmp; break; }
         }
       }
-      const annualWithdrawalBase = vtWrBase != null ? vtWrBase * wr : null;
+      const annualWithdrawalBase = (vtWrBase != null) ? vtWrBase * wr : null;
 
       const years = [];
       const vals = [];
       const withdrawals = [];
 
-      for(let y=sY; y<=eY; y++){
-        const mContr = monthlyForYear(y, defM);
-        for(let m=0; m<12; m++) vt = vt * (1 + monthlyRate) + mContr;
-        vt += annualForYear(y, defA);
+      for(let y = sY; y <= eY; y++){
+        const mContr = monthlyForYear(y);
+        for(let m = 0; m < 12; m++) vt = vt * (1 + monthlyRate) + mContr;
+        vt += annualForYear(y);
 
         let w = 0;
         if(wrStart >= sY && wrStart <= eY && y >= wrStart){
@@ -695,23 +716,24 @@
       chart.data.datasets[1].data = withdrawals.map(v => v/1000);
       chart.update();
 
-      const final = vals.at(-1) || 0;
-      const lastW = withdrawals.at(-1) || 0;
+      const final = vals.length ? vals[vals.length - 1] : 0;
+      const lastW = withdrawals.length ? withdrawals[withdrawals.length - 1] : 0;
+
       document.getElementById('summary').textContent =
         `Capital en ${eY} : ${final.toFixed(0)} CHF • Retrait annuel (dernière année) : ${lastW.toFixed(0)} CHF (~${(lastW/12).toFixed(0)} /mois)`;
     }
 
     // Auto-update (aucun bouton)
-    const baseIds = ['rate','wrMode','wr','wrStart','initial','defaultMonthly','defaultAnnual'];
-    baseIds.forEach(id => {
-      document.getElementById(id).addEventListener('input', scheduleSim);
-      document.getElementById(id).addEventListener('change', scheduleSim);
-    });
-
-    // start/end doivent aussi re-render les sliders (min/max)
-    ['startYear','endYear'].forEach(id => {
-      document.getElementById(id).addEventListener('input', () => { renderSegments(); scheduleSim(); });
-      document.getElementById(id).addEventListener('change', () => { renderSegments(); scheduleSim(); });
+    const ids = ['startYear','endYear','rate','wrMode','wr','wrStart','initial'];
+    ids.forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        if(id === 'startYear' || id === 'endYear') renderSegments(); // maj min/max des sliders
+        scheduleSim();
+      });
+      document.getElementById(id).addEventListener('change', () => {
+        if(id === 'startYear' || id === 'endYear') renderSegments();
+        scheduleSim();
+      });
     });
 
     // Init

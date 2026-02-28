@@ -349,9 +349,6 @@
 <body>
   <header class="topbar">
     <h1 class="title"><span>Simulateur FIRE</span> – VT & Retraits</h1>
-    <p class="subtitle">
-      Versements par <strong>plages d’années</strong> (curseurs) + recalcul instantané. Aucun bouton.
-    </p>
   </header>
 
   <div class="app">
@@ -404,26 +401,9 @@
       <label>Année début des retraits
         <input id="wrStart" type="number" value="2043" min="1900" max="2200" />
       </label>
-
-      <h2 class="sectionTitle" style="margin-top:14px;"><span class="bar"></span> Default (si pas de segment)</h2>
-
-      <div class="grid2">
-        <label>Mensuel par défaut (CHF)
-          <input id="defaultMonthly" type="number" value="3340" step="50" />
-        </label>
-        <label>Annuel par défaut (CHF)
-          <input id="defaultAnnual" type="number" value="7500" step="100" />
-        </label>
-      </div>
-
       <h2 class="sectionTitle" style="margin-top:14px;"><span class="bar"></span> Segments </h2>
       <div id="segments" class="segments"></div>
       <button class="addBtn" type="button" id="addSegment">＋ Ajouter un segment</button>
-
-      <p class="mini">
-        Chaque segment = <strong>De → À</strong> + <strong>mensuel</strong> + <strong>annuel</strong>.
-        Rien à “mettre à jour”.
-      </p>
     </aside>
   </div>
 

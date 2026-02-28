@@ -4,415 +4,783 @@
   <meta charset="UTF-8" />
   <title>Simulateur FIRE – VT & Retraits</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
-    :root {
-      --bg-gradient: radial-gradient(circle at top left, #020617 0%, #020617 40%, #020617 100%);
-      --card-bg: rgba(15, 23, 42, 0.92);
-      --border-glow: rgba(56, 189, 248, 0.5);
-      --accent: #22d3ee;
-      --accent-soft: rgba(34, 211, 238, 0.15);
-      --text-main: #e5e7eb;
-      --text-muted: #9ca3af;
-      --danger: #fb7185;
+    :root{
+      /* Fond / atmosphère */
+      --bg0:#020617;
+      --bg1:#050b1a;
+      --bg2:#070a1f;
+
+      /* Glass */
+      --glass: rgba(15, 23, 42, 0.58);
+      --glass-strong: rgba(15, 23, 42, 0.72);
+      --stroke: rgba(148, 163, 184, 0.22);
+
+      /* Texte */
+      --text: #e5e7eb;
+      --muted:#9ca3af;
+
+      /* Accents */
+      --aqua:#22d3ee;
+      --violet:#a855f7;
+      --amber:#fbbf24;
+      --rose:#fb7185;
+
+      --glow: rgba(34, 211, 238, 0.35);
+      --shadow: 0 22px 70px rgba(0,0,0,0.55);
+      --shadow2: 0 18px 40px rgba(15, 23, 42, 0.75);
+
+      --radius-xl: 22px;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+
+      --ease: cubic-bezier(.2,.8,.2,1);
     }
 
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: var(--bg-gradient);
-      color: var(--text-main);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
+      color:var(--text);
+      background: radial-gradient(1200px 800px at 20% 10%, #0b1a3a 0%, transparent 55%),
+                  radial-gradient(900px 700px at 85% 20%, rgba(168,85,247,0.22) 0%, transparent 60%),
+                  radial-gradient(900px 700px at 70% 85%, rgba(34,211,238,0.18) 0%, transparent 60%),
+                  radial-gradient(700px 500px at 25% 85%, rgba(251,191,36,0.12) 0%, transparent 60%),
+                  linear-gradient(180deg, var(--bg1), var(--bg0) 55%, var(--bg2));
+      overflow-x:hidden;
     }
 
-    h1 {
-      font-size: 1.8rem;
-      margin: 0 0 4px;
-      text-align: center;
-      letter-spacing: .03em;
+    /* “bruit” subtil + lueurs lentes (neuro / web3, sans agresser) */
+    body::before{
+      content:"";
+      position:fixed; inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(1000px 700px at 30% 20%, rgba(251,113,133,0.10), transparent 55%),
+        radial-gradient(1100px 800px at 70% 70%, rgba(34,211,238,0.10), transparent 55%),
+        radial-gradient(800px 600px at 65% 25%, rgba(168,85,247,0.12), transparent 55%);
+      filter: blur(2px);
+      opacity: .9;
+      animation: drift 18s var(--ease) infinite alternate;
+    }
+    body::after{
+      content:"";
+      position:fixed; inset:0;
+      pointer-events:none;
+      opacity:.06;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+      mix-blend-mode: overlay;
+    }
+    @keyframes drift{
+      0%{ transform: translate3d(0,0,0) scale(1); }
+      100%{ transform: translate3d(-18px, 12px, 0) scale(1.02); }
     }
 
-    h1 span {
-      background: linear-gradient(120deg, #22d3ee, #a855f7);
-      -webkit-background-clip: text;
-      color: transparent;
+    .topbar{
+      max-width:1240px;
+      margin: 18px auto 10px;
+      padding: 0 16px;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:14px;
     }
 
-    .subtitle {
-      text-align: center;
-      color: var(--text-muted);
-      max-width: 640px;
-      margin-bottom: 20px;
-      font-size: 0.94rem;
+    .title{
+      margin:0;
+      font-size: 1.35rem;
+      letter-spacing:.02em;
+      line-height:1.15;
+    }
+    .title span{
+      background: linear-gradient(120deg, var(--aqua), var(--violet));
+      -webkit-background-clip:text;
+      color:transparent;
+    }
+    .subtitle{
+      margin:6px 0 0;
+      color:var(--muted);
+      max-width: 760px;
+      font-size: .92rem;
     }
 
-    .shell {
-      width: 100%;
-      max-width: 1180px;
-      display: grid;
-      grid-template-columns: minmax(0, 340px) minmax(0, 340px) minmax(0, 1fr);
-      gap: 16px;
+    .app{
+      max-width:1240px;
+      margin: 0 auto 26px;
+      padding: 0 16px 10px;
+      display:grid;
+      grid-template-columns: 290px minmax(0,1fr) 340px;
+      gap:16px;
+      align-items:start;
     }
 
-    @media (max-width: 960px) {
-      .shell { grid-template-columns: minmax(0, 1fr); }
+    @media (max-width: 1080px){
+      .app{ grid-template-columns: 1fr; }
     }
 
-    .card {
-      position: relative;
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 12px 14px 14px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.9);
+    .glass{
+      position:relative;
+      border-radius: var(--radius-xl);
+      background: linear-gradient(180deg, rgba(15,23,42,0.62), rgba(15,23,42,0.48));
+      border: 1px solid var(--stroke);
+      box-shadow: var(--shadow2);
       backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      overflow:hidden;
     }
-
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: -1px;
+    .glass::before{
+      content:"";
+      position:absolute; inset:-1px;
       border-radius: inherit;
-      background: radial-gradient(circle at top, var(--border-glow), transparent 55%);
-      opacity: 0.35;
-      z-index: -1;
+      background: radial-gradient(900px 220px at 30% 0%, rgba(34,211,238,0.22), transparent 60%),
+                  radial-gradient(900px 220px at 70% 0%, rgba(168,85,247,0.18), transparent 60%);
+      opacity:.65;
+      pointer-events:none;
+      z-index:0;
+    }
+    .glass > *{ position:relative; z-index:1; }
+
+    .panel{
+      padding: 14px 14px 16px;
     }
 
-    h2 {
-      font-size: 1.02rem;
-      margin: 0 0 6px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .sectionTitle{
+      margin: 0 0 8px;
+      font-size: .98rem;
+      display:flex;
+      align-items:center;
+      gap:8px;
     }
-
-    h2 span {
-      width: 6px;
-      height: 18px;
+    .bar{
+      width:7px; height:18px;
       border-radius: 999px;
-      background: linear-gradient(180deg, #22d3ee, #a855f7);
-      display: inline-block;
+      background: linear-gradient(180deg, var(--aqua), var(--violet));
+      box-shadow: 0 0 18px rgba(34,211,238,0.25);
     }
 
-    label {
-      display: block;
-      margin-top: 8px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
+    /* Menu gauche */
+    .nav{
+      padding: 12px;
+      position:sticky;
+      top:12px;
+    }
+    @media (max-width:1080px){
+      .nav{ position:relative; top:auto; }
     }
 
-    input[type="number"], select {
-      width: 100%;
-      margin-top: 3px;
-      border-radius: 8px;
-      border: 1px solid rgba(148, 163, 184, 0.5);
-      padding: 5px 8px;
-      background-color: rgba(15, 23, 42, 0.9);
-      color: var(--text-main);
-      font-size: 0.84rem;
+    .nav .brand{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 8px 10px 10px;
+      border-radius: var(--radius-lg);
+      background: rgba(2,6,23,0.35);
+      border: 1px solid rgba(148,163,184,0.16);
+    }
+    .brand strong{
+      font-size:.92rem;
+      letter-spacing:.02em;
+    }
+    .badge{
+      font-size:.72rem;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,0.22);
+      color: var(--muted);
+      background: rgba(2,6,23,0.28);
     }
 
-    input[type="number"]:focus, select:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px var(--accent-soft);
-    }
-
-    small { color: var(--text-muted); }
-
-    .year-rows {
-      max-height: 210px;
-      overflow-y: auto;
-      margin-top: 4px;
-      padding-right: 4px;
-    }
-
-    .year-row {
-      display: flex;
-      gap: 6px;
-      margin-top: 4px;
-      align-items: center;
-    }
-
-    .year-row span {
-      width: 52px;
-      font-size: 0.78rem;
-      color: var(--text-muted);
-    }
-
-    .year-row input {
-      flex: 1;
-      font-size: 0.8rem;
-    }
-
-    button {
+    .navBtns{
       margin-top: 10px;
-      padding: 7px 12px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .navBtn{
+      width:100%;
+      text-align:left;
+      border:1px solid rgba(148,163,184,0.18);
+      background: rgba(2,6,23,0.26);
+      color: var(--text);
       border-radius: 999px;
-      border: none;
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: #020617;
-      background: linear-gradient(120deg, #22d3ee, #a855f7);
-      cursor: pointer;
-      box-shadow: 0 10px 28px rgba(34, 211, 238, 0.4);
-      transition: transform 0.08s ease, box-shadow 0.08s ease;
+      padding: 10px 12px;
+      cursor:pointer;
+      transition: transform .25s var(--ease), border-color .25s var(--ease), box-shadow .25s var(--ease);
+    }
+    .navBtn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(34,211,238,0.35);
+      box-shadow: 0 0 0 1px rgba(34,211,238,0.10), 0 16px 40px rgba(0,0,0,0.35);
+    }
+    .navBtn.active{
+      border-color: rgba(34,211,238,0.50);
+      box-shadow: 0 0 0 1px rgba(34,211,238,0.16), 0 18px 44px rgba(0,0,0,0.40);
+    }
+    .navHint{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:.82rem;
+      line-height:1.35;
+      padding: 10px 12px;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(148,163,184,0.14);
+      background: rgba(2,6,23,0.22);
     }
 
-    button:hover { transform: translateY(-1px); }
-    button:active { transform: translateY(0); box-shadow: 0 8px 20px rgba(15,23,42,0.8); }
-
-    #chartCard { grid-column: span 3; }
-    @media (max-width: 960px) { #chartCard { grid-column: span 1; } }
-
-    #chart {
-      width: 100%;
-      max-height: 440px;
+    /* Inputs */
+    label{
+      display:block;
+      margin-top: 10px;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+    input[type="number"], select{
+      width:100%;
+      margin-top: 5px;
+      padding: 9px 10px;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(148,163,184,0.28);
+      background: rgba(2,6,23,0.35);
+      color: var(--text);
+      outline:none;
+      transition: box-shadow .25s var(--ease), border-color .25s var(--ease), transform .25s var(--ease);
+    }
+    input[type="number"]:focus, select:focus{
+      border-color: rgba(34,211,238,0.55);
+      box-shadow: 0 0 0 2px rgba(34,211,238,0.14);
+      transform: translateY(-1px);
     }
 
-    #summary {
-      margin-top: 8px;
-      font-size: 0.88rem;
-      color: var(--text-muted);
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .grid3{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width:1080px){
+      .grid2,.grid3{ grid-template-columns: 1fr; }
     }
 
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 3px 8px;
+    /* Centre (chart) */
+    .center{
+      padding: 14px 14px 16px;
+      min-height: 520px;
+    }
+    .chartWrap{
+      margin-top: 10px;
+      border-radius: var(--radius-xl);
+      border: 1px solid rgba(148,163,184,0.14);
+      background: rgba(2,6,23,0.20);
+      padding: 10px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      transform: translateZ(0);
+    }
+    .chartWrap:hover{
+      box-shadow: 0 0 0 1px rgba(34,211,238,0.10), 0 28px 90px rgba(0,0,0,0.55);
+    }
+    canvas{ width:100%; max-height: 430px; }
+
+    .statusRow{
+      margin-top: 10px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+      justify-content:space-between;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 6px 10px;
+      border-radius:999px;
+      border: 1px solid rgba(148,163,184,0.18);
+      background: rgba(2,6,23,0.26);
+      color: var(--muted);
+      font-size:.78rem;
+    }
+    .dot{
+      width:7px; height:7px;
+      border-radius:999px;
+      background: var(--aqua);
+      box-shadow: 0 0 16px rgba(34,211,238,0.35);
+    }
+    .danger{ color: var(--rose); font-weight: 600; }
+
+    /* Segments (plages) */
+    .segments{
+      margin-top: 10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .segment{
+      border-radius: var(--radius-xl);
+      border: 1px solid rgba(148,163,184,0.16);
+      background: rgba(2,6,23,0.20);
+      padding: 10px;
+      transition: transform .25s var(--ease), border-color .25s var(--ease), box-shadow .25s var(--ease);
+    }
+    .segment:hover{
+      transform: translateY(-1px);
+      border-color: rgba(34,211,238,0.28);
+      box-shadow: 0 0 0 1px rgba(34,211,238,0.10), 0 16px 40px rgba(0,0,0,0.40);
+    }
+    .segTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 8px;
+    }
+    .segTitle{
+      font-size:.86rem;
+      color: var(--text);
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    .segTitle em{
+      font-style:normal;
+      color: var(--muted);
+      font-size:.78rem;
+    }
+
+    .iconBtn{
+      border: 1px solid rgba(148,163,184,0.18);
+      background: rgba(2,6,23,0.24);
+      color: var(--text);
       border-radius: 999px;
-      background-color: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(148, 163, 184, 0.5);
-      font-size: 0.75rem;
-      color: var(--text-muted);
+      padding: 6px 10px;
+      cursor:pointer;
+      transition: transform .2s var(--ease), border-color .2s var(--ease), box-shadow .2s var(--ease);
+      font-size:.8rem;
+    }
+    .iconBtn:hover{
+      transform: translateY(-1px);
+      border-color: rgba(251,113,133,0.35);
+      box-shadow: 0 0 0 1px rgba(251,113,133,0.10);
+    }
+
+    /* Dual-range (2 sliders) */
+    .rangeBox{
       margin-top: 6px;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(148,163,184,0.14);
+      background: rgba(2,6,23,0.18);
+      padding: 10px;
     }
-
-    .pill-dot {
-      width: 6px;
+    .rangeLabels{
+      display:flex;
+      justify-content:space-between;
+      color: var(--muted);
+      font-size:.76rem;
+      margin-bottom: 6px;
+    }
+    .dual{
+      position:relative;
+      height: 28px;
+    }
+    .dual input[type="range"]{
+      position:absolute;
+      left:0; right:0;
+      width:100%;
+      margin:0;
+      top: 8px;
+      pointer-events:none;
+      -webkit-appearance:none;
+      background:transparent;
       height: 6px;
+    }
+    .dual input[type="range"]::-webkit-slider-thumb{
+      -webkit-appearance:none;
+      pointer-events:auto;
+      width: 16px; height: 16px;
       border-radius: 999px;
-      background: var(--accent);
+      border: 1px solid rgba(148,163,184,0.30);
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.22), rgba(255,255,255,0) 55%),
+                  linear-gradient(120deg, rgba(34,211,238,0.95), rgba(168,85,247,0.95));
+      box-shadow: 0 10px 22px rgba(0,0,0,0.45), 0 0 18px rgba(34,211,238,0.25);
+    }
+    .track{
+      position:absolute;
+      left:0; right:0;
+      top: 10px;
+      height: 6px;
+      border-radius:999px;
+      background: rgba(148,163,184,0.14);
+      overflow:hidden;
+    }
+    .track .fill{
+      position:absolute;
+      top:0; bottom:0;
+      left: 20%;
+      right: 20%;
+      background: linear-gradient(90deg, rgba(34,211,238,0.55), rgba(168,85,247,0.55));
+      box-shadow: inset 0 0 0 1px rgba(34,211,238,0.14);
     }
 
-    .note-danger { color: var(--danger); font-weight: 500; }
+    .addBtn{
+      margin-top: 10px;
+      width:100%;
+      border:none;
+      border-radius: 999px;
+      padding: 10px 12px;
+      cursor:pointer;
+      color: #020617;
+      font-weight: 650;
+      background: linear-gradient(120deg, var(--aqua), var(--violet));
+      box-shadow: 0 16px 42px rgba(34,211,238,0.22);
+      transition: transform .25s var(--ease), box-shadow .25s var(--ease);
+    }
+    .addBtn:hover{ transform: translateY(-1px); box-shadow: 0 22px 60px rgba(34,211,238,0.25); }
+
+    .mini{
+      margin-top: 10px;
+      font-size: .78rem;
+      color: var(--muted);
+      line-height:1.35;
+    }
   </style>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
-  <h1><span>Simulateur FIRE</span> – VT & Retraits pour le Costa Rica</h1>
-  <p class="subtitle">
-    Joue avec les rendements, les versements et les retraits pour visualiser votre trajectoire de capital.
-    Idéal pour montrer le plan Costa Rica à ChaCha, sans Excel ni calculatrice.
-  </p>
+  <header class="topbar">
+    <div>
+      <h1 class="title"><span>Simulateur FIRE</span> – VT & Retraits (Costa Rica)</h1>
+      <p class="subtitle">
+        Explore la trajectoire du capital avec un rythme visuel calme : ajustements = mise à jour immédiate, sans bouton.
+      </p>
+    </div>
+  </header>
 
-  <div class="shell">
-    <div class="card">
-      <h2><span></span> Paramètres généraux</h2>
-      <label>
-        Année de début
-        <input id="startYear" type="number" value="2025" />
-      </label>
-      <label>
-        Année de fin
-        <input id="endYear" type="number" value="2060" />
-      </label>
-      <label>
-        Taux de rendement annuel (%)
-        <input id="rate" type="number" step="0.1" value="5" />
-      </label>
-      <label>
-        Mode de retrait
-        <select id="wrMode">
-          <option value="percentCurrent">% du capital chaque année (dynamique)</option>
-          <option value="percentBase">% du capital à l'année de départ (montant fixe)</option>
-        </select>
-      </label>
-      <label>
-        Taux de retrait (%)
-        <input id="wr" type="number" step="0.1" value="3.5" />
-      </label>
-      <label>
-        Année de début des retraits
-        <input id="wrStart" type="number" value="2043" />
-      </label>
-      <label>
-        Capital initial (CHF)
-        <input id="initial" type="number" value="0" />
-      </label>
-
-      <div class="pill">
-        <span class="pill-dot"></span>
-        <span>Astuce : commence avec 5% / 3.5% puis teste 7% pour montrer le potentiel.</span>
+  <div class="app">
+    <!-- 1) Menu gauche -->
+    <aside class="glass nav">
+      <div class="brand">
+        <strong>Navigation</strong>
+        <span class="badge">v0.2</span>
       </div>
 
-      <button onclick="runSim()">⚡ Mettre à jour le graphique</button>
-    </div>
+      <div class="navBtns">
+        <button class="navBtn active" type="button">Paramètres</button>
+        <button class="navBtn" type="button">Versements</button>
+        <button class="navBtn" type="button">Retraits</button>
+        <button class="navBtn" type="button">Lecture</button>
+      </div>
 
-    <div class="card">
-      <h2><span></span> Versements mensuels</h2>
-      <p><small>Montant par défaut, puis exceptions par année (laisse vide si pas d'exception).</small></p>
+      <div class="navHint">
+        <strong>Principe :</strong> tu définis des <em>segments</em> (plages d’années).
+        Le default sert de base, puis les segments surchargent.
+      </div>
+    </aside>
+
+    <!-- 2) Zone centrale -->
+    <main class="glass center">
+      <h2 class="sectionTitle"><span class="bar"></span> Courbe du capital</h2>
+
+      <div class="chartWrap">
+        <canvas id="chart"></canvas>
+      </div>
+
+      <div class="statusRow">
+        <div class="pill"><span class="dot"></span><span id="summary">—</span></div>
+        <div class="pill danger">Simulation simplifiée — pas un conseil financier.</div>
+      </div>
+
+      <p class="mini">
+        Hover = exploration douce. Focus clavier = verrouillage. Transitions lentes pour éviter la violence visuelle.
+      </p>
+    </main>
+
+    <!-- 3) Panneau droit -->
+    <aside class="glass panel">
+      <h2 class="sectionTitle"><span class="bar"></span> Contrôles</h2>
+
+      <div class="grid2">
+        <label>
+          Année de début
+          <input id="startYear" type="number" value="2025" min="1900" max="2200" />
+        </label>
+        <label>
+          Année de fin
+          <input id="endYear" type="number" value="2060" min="1900" max="2200" />
+        </label>
+      </div>
+
+      <div class="grid2">
+        <label>
+          Rendement annuel (%)
+          <input id="rate" type="number" step="0.1" value="5" />
+        </label>
+        <label>
+          Capital initial (CHF)
+          <input id="initial" type="number" value="0" step="1000" />
+        </label>
+      </div>
+
+      <div class="grid2">
+        <label>
+          Mode de retrait
+          <select id="wrMode">
+            <option value="percentCurrent">% du capital chaque année (dynamique)</option>
+            <option value="percentBase">% du capital à l'année de départ (montant fixe)</option>
+          </select>
+        </label>
+        <label>
+          Taux de retrait (%)
+          <input id="wr" type="number" step="0.1" value="3.5" />
+        </label>
+      </div>
+
       <label>
-        Versement mensuel par défaut (CHF)
-        <input id="defaultMonthly" type="number" value="3340" />
+        Année début des retraits
+        <input id="wrStart" type="number" value="2043" min="1900" max="2200" />
       </label>
-      <div class="year-rows" id="monthlyYears"></div>
-    </div>
 
-    <div class="card">
-      <h2><span></span> Versements annuels</h2>
-      <p><small>Par ex. 7'500 CHF/an jusqu'en 2039, puis 0 après.</small></p>
-      <label>
-        Versement annuel par défaut (CHF)
-        <input id="defaultAnnual" type="number" value="7500" />
-      </label>
-      <div class="year-rows" id="annualYears"></div>
-    </div>
+      <h2 class="sectionTitle" style="margin-top:14px;"><span class="bar"></span> Versements (default)</h2>
 
-    <div class="card" id="chartCard">
-      <h2><span></span> Courbe du capital</h2>
-      <canvas id="chart"></canvas>
-      <p id="summary"></p>
-      <p><small class="note-danger">Rappel : simulation simplifiée, pas un conseil financier personnalisé.</small></p>
-    </div>
+      <div class="grid2">
+        <label>
+          Mensuel par défaut (CHF)
+          <input id="defaultMonthly" type="number" value="3340" step="50" />
+        </label>
+        <label>
+          Annuel par défaut (CHF)
+          <input id="defaultAnnual" type="number" value="7500" step="100" />
+        </label>
+      </div>
+
+      <h2 class="sectionTitle" style="margin-top:14px;"><span class="bar"></span> Segments (plages)</h2>
+
+      <div id="segments" class="segments"></div>
+      <button class="addBtn" type="button" id="addSegment">＋ Ajouter un segment</button>
+
+      <p class="mini">
+        Exemple : “2030 → 2039 : 4’000/mois, 7’500/an”. Tout se met à jour automatiquement.
+      </p>
+    </aside>
   </div>
 
   <script>
-    let chart;
+    // -----------------------------
+    // Données UI : segments (plages)
+    // -----------------------------
+    let segments = [
+      { id: crypto.randomUUID(), from: 2025, to: 2039, monthly: 3340, annual: 7500 },
+      { id: crypto.randomUUID(), from: 2040, to: 2060, monthly: 0, annual: 0 }
+    ];
 
-    function buildYearInputs() {
-      const startY = parseInt(document.getElementById('startYear').value, 10);
-      const endY = parseInt(document.getElementById('endYear').value, 10);
-      const monthlyDiv = document.getElementById('monthlyYears');
-      const annualDiv = document.getElementById('annualYears');
-      monthlyDiv.innerHTML = '';
-      annualDiv.innerHTML = '';
-      for (let y = startY; y <= endY; y++) {
-        const rowM = document.createElement('div');
-        rowM.className = 'year-row';
-        rowM.innerHTML = `<span>${y}</span><input type="number" step="100" placeholder="mois" data-year="${y}" class="mYear" />`;
-        monthlyDiv.appendChild(rowM);
-
-        const rowA = document.createElement('div');
-        rowA.className = 'year-row';
-        rowA.innerHTML = `<span>${y}</span><input type="number" step="100" placeholder="an" data-year="${y}" class="aYear" />`;
-        annualDiv.appendChild(rowA);
-      }
+    // Debounce : évite de recalculer 40x par seconde
+    let simTimer = null;
+    function scheduleSim(){
+      if(simTimer) clearTimeout(simTimer);
+      simTimer = setTimeout(runSim, 80);
     }
 
-    function getMonthlyForYear(year, def) {
-      const inputs = document.querySelectorAll('.mYear');
-      for (const inp of inputs) {
-        if (parseInt(inp.dataset.year, 10) === year && inp.value !== '') {
-          return parseFloat(inp.value);
+    // Utils
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const num = (id) => parseFloat(document.getElementById(id).value) || 0;
+    const intv = (id) => parseInt(document.getElementById(id).value, 10);
+
+    // Renvoie la règle applicable pour une année (dernier segment gagnant)
+    function getRuleForYear(year){
+      for(let i = segments.length - 1; i >= 0; i--){
+        const s = segments[i];
+        if(year >= s.from && year <= s.to){
+          return s;
         }
       }
-      return def;
+      return null;
     }
 
-    function getAnnualForYear(year, def) {
-      const inputs = document.querySelectorAll('.aYear');
-      for (const inp of inputs) {
-        if (parseInt(inp.dataset.year, 10) === year && inp.value !== '') {
-          return parseFloat(inp.value);
-        }
-      }
-      return def;
+    function monthlyForYear(year, def){
+      const r = getRuleForYear(year);
+      return r ? (parseFloat(r.monthly) || 0) : def;
+    }
+    function annualForYear(year, def){
+      const r = getRuleForYear(year);
+      return r ? (parseFloat(r.annual) || 0) : def;
     }
 
-    function runSim() {
-      const startY = parseInt(document.getElementById('startYear').value, 10);
-      const endY = parseInt(document.getElementById('endYear').value, 10);
-      const rate = parseFloat(document.getElementById('rate').value) / 100.0;
-      const wr = parseFloat(document.getElementById('wr').value) / 100.0;
-      const wrStart = parseInt(document.getElementById('wrStart').value, 10);
-      const wrMode = document.getElementById('wrMode').value;
-      const initial = parseFloat(document.getElementById('initial').value) || 0;
-      const defM = parseFloat(document.getElementById('defaultMonthly').value) || 0;
-      const defA = parseFloat(document.getElementById('defaultAnnual').value) || 0;
+    // -----------------------------
+    // UI segments (dual sliders + inputs)
+    // -----------------------------
+    function renderSegments(){
+      const wrap = document.getElementById('segments');
+      wrap.innerHTML = '';
 
-      const years = [];
-      const vals = [];
-      const withdrawals = [];
+      const startY = clamp(intv('startYear'), 1900, 2200);
+      const endY = clamp(intv('endYear'), 1900, 2200);
+      const minY = Math.min(startY, endY);
+      const maxY = Math.max(startY, endY);
 
-      let vt = initial;
-      const monthlyRate = rate / 12.0;
+      segments.forEach((s, idx) => {
+        const card = document.createElement('div');
+        card.className = 'segment';
 
-      // Mode retrait base : calcul du capital à l'année de départ
-      let vtWrBase = null;
-      if (wrMode === 'percentBase') {
-        for (let y = startY; y <= endY; y++) {
-          const mContr = getMonthlyForYear(y, defM);
-          for (let m = 0; m < 12; m++) {
-            vt = vt * (1 + monthlyRate) + mContr;
+        card.innerHTML = `
+          <div class="segTop">
+            <div class="segTitle">
+              Segment ${idx+1}
+              <em>(${s.from} → ${s.to})</em>
+            </div>
+            <button class="iconBtn" type="button" data-del="${s.id}">Supprimer</button>
+          </div>
+
+          <div class="rangeBox">
+            <div class="rangeLabels">
+              <span>De : <strong id="fromLabel-${s.id}">${s.from}</strong></span>
+              <span>À : <strong id="toLabel-${s.id}">${s.to}</strong></span>
+            </div>
+
+            <div class="dual">
+              <div class="track"><div class="fill" id="fill-${s.id}"></div></div>
+              <input type="range" min="${minY}" max="${maxY}" value="${s.from}" step="1" data-range="from" data-id="${s.id}">
+              <input type="range" min="${minY}" max="${maxY}" value="${s.to}" step="1" data-range="to" data-id="${s.id}">
+            </div>
+          </div>
+
+          <div class="grid2" style="margin-top:8px;">
+            <label>
+              Mensuel (CHF)
+              <input type="number" step="50" value="${s.monthly}" data-field="monthly" data-id="${s.id}">
+            </label>
+            <label>
+              Annuel (CHF)
+              <input type="number" step="100" value="${s.annual}" data-field="annual" data-id="${s.id}">
+            </label>
+          </div>
+        `;
+
+        wrap.appendChild(card);
+        updateFillForSegment(s.id, minY, maxY);
+      });
+
+      // Handlers (event delegation)
+      wrap.querySelectorAll('button[data-del]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-del');
+          segments = segments.filter(s => s.id !== id);
+          renderSegments();
+          scheduleSim();
+        });
+      });
+
+      wrap.querySelectorAll('input[type="range"]').forEach(r => {
+        r.addEventListener('input', () => {
+          const id = r.dataset.id;
+          const kind = r.dataset.range;
+          const seg = segments.find(x => x.id === id);
+          if(!seg) return;
+
+          const v = parseInt(r.value, 10);
+          if(kind === 'from') seg.from = v;
+          if(kind === 'to') seg.to = v;
+
+          // Garantit from <= to
+          if(seg.from > seg.to){
+            const tmp = seg.from; seg.from = seg.to; seg.to = tmp;
           }
-          const aContr = getAnnualForYear(y, defA);
-          vt += aContr;
-          if (y === wrStart) {
-            vtWrBase = vt;
-            break;
-          }
-        }
-        if (vtWrBase === null) {
-          alert("L'année de début des retraits doit être comprise entre l'année de début et l'année de fin.");
-          return;
-        }
-      }
 
-      vt = initial;
-      let annualWithdrawalBase = vtWrBase ? vtWrBase * wr : null;
+          document.getElementById(`fromLabel-${id}`).textContent = seg.from;
+          document.getElementById(`toLabel-${id}`).textContent = seg.to;
 
-      for (let y = startY; y <= endY; y++) {
-        const mContr = getMonthlyForYear(y, defM);
-        for (let m = 0; m < 12; m++) {
-          vt = vt * (1 + monthlyRate) + mContr;
-        }
-        const aContr = getAnnualForYear(y, defA);
-        vt += aContr;
+          const startY = clamp(intv('startYear'), 1900, 2200);
+          const endY = clamp(intv('endYear'), 1900, 2200);
+          const minY = Math.min(startY, endY);
+          const maxY = Math.max(startY, endY);
+          updateFillForSegment(id, minY, maxY);
 
-        let thisWithdrawal = 0;
-        if (y >= wrStart) {
-          if (wrMode === 'percentBase') {
-            thisWithdrawal = annualWithdrawalBase;
-          } else if (wrMode === 'percentCurrent') {
-            thisWithdrawal = vt * wr;
-          }
-          vt -= thisWithdrawal;
-        }
+          scheduleSim();
+        });
+      });
 
-        withdrawals.push(thisWithdrawal);
-        years.push(y);
-        vals.push(vt);
-      }
+      wrap.querySelectorAll('input[type="number"][data-field]').forEach(inp => {
+        inp.addEventListener('input', () => {
+          const id = inp.dataset.id;
+          const field = inp.dataset.field;
+          const seg = segments.find(x => x.id === id);
+          if(!seg) return;
+          seg[field] = parseFloat(inp.value) || 0;
+          scheduleSim();
+        });
+      });
+    }
 
+    function updateFillForSegment(id, minY, maxY){
+      const seg = segments.find(s => s.id === id);
+      if(!seg) return;
+      const fill = document.getElementById(`fill-${id}`);
+      if(!fill) return;
+
+      const span = Math.max(1, (maxY - minY));
+      const left = ((seg.from - minY) / span) * 100;
+      const right = 100 - ((seg.to - minY) / span) * 100;
+
+      fill.style.left = `${clamp(left, 0, 100)}%`;
+      fill.style.right = `${clamp(right, 0, 100)}%`;
+    }
+
+    document.getElementById('addSegment').addEventListener('click', () => {
+      const startY = clamp(intv('startYear'), 1900, 2200);
+      const endY = clamp(intv('endYear'), 1900, 2200);
+      const minY = Math.min(startY, endY);
+      const maxY = Math.max(startY, endY);
+
+      segments.push({
+        id: crypto.randomUUID(),
+        from: minY,
+        to: maxY,
+        monthly: num('defaultMonthly'),
+        annual: num('defaultAnnual')
+      });
+
+      renderSegments();
+      scheduleSim();
+    });
+
+    // -----------------------------
+    // Chart
+    // -----------------------------
+    let chart = null;
+
+    function ensureChart(){
+      if(chart) return;
       const ctx = document.getElementById('chart').getContext('2d');
-      if (chart) chart.destroy();
       chart = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: years,
+          labels: [],
           datasets: [
             {
               label: 'Capital (kCHF)',
-              data: vals.map(v => v / 1000.0),
-              borderColor: 'rgba(56, 189, 248, 1)',
-              backgroundColor: 'rgba(56, 189, 248, 0.08)',
-              tension: 0.2,
+              data: [],
+              borderColor: 'rgba(34, 211, 238, 1)',
+              backgroundColor: 'rgba(34, 211, 238, 0.08)',
+              tension: 0.22,
               fill: true,
+              pointRadius: 0
             },
             {
               label: 'Retrait annuel (kCHF)',
-              data: withdrawals.map(v => v / 1000.0),
-              borderColor: 'rgba(148, 163, 184, 1)',
+              data: [],
+              borderColor: 'rgba(148, 163, 184, 0.95)',
               borderDash: [6, 4],
+              tension: 0.15,
               pointRadius: 0,
-              fill: false,
+              fill: false
             },
           ],
         },
@@ -423,35 +791,140 @@
             legend: {
               labels: {
                 color: '#e5e7eb',
-                font: { size: 11 },
-              },
+                font: { size: 11 }
+              }
             },
+            tooltip: {
+              backgroundColor: 'rgba(2,6,23,0.85)',
+              borderColor: 'rgba(148,163,184,0.25)',
+              borderWidth: 1,
+              titleColor: '#e5e7eb',
+              bodyColor: '#e5e7eb'
+            }
           },
           scales: {
             y: {
               title: { display: true, text: 'kCHF', color: '#9ca3af' },
               ticks: { color: '#9ca3af' },
-              grid: { color: 'rgba(55,65,81,0.4)' },
+              grid: { color: 'rgba(55,65,81,0.35)' }
             },
             x: {
               title: { display: true, text: 'Année', color: '#9ca3af' },
               ticks: { color: '#9ca3af' },
-              grid: { color: 'rgba(31,41,55,0.5)' },
-            },
-          },
-        },
+              grid: { color: 'rgba(31,41,55,0.45)' }
+            }
+          }
+        }
       });
-
-      const final = vals[vals.length - 1];
-      const lastW = withdrawals[withdrawals.length - 1];
-      document.getElementById('summary').innerText =
-        `Capital en ${endY} : ${final.toFixed(0)} CHF  •  Retrait annuel (dernière année) : ${lastW.toFixed(0)} CHF (~${(lastW/12).toFixed(0)} CHF/mois)`;
     }
 
-    document.getElementById('startYear').addEventListener('change', buildYearInputs);
-    document.getElementById('endYear').addEventListener('change', buildYearInputs);
-    buildYearInputs();
-    window.onload = runSim;
+    // -----------------------------
+    // Simulation
+    // -----------------------------
+    function runSim(){
+      const startY = clamp(intv('startYear'), 1900, 2200);
+      const endY = clamp(intv('endYear'), 1900, 2200);
+      if(endY < startY){
+        // On accepte l'inversion mais on corrige visuellement
+        document.getElementById('endYear').value = startY;
+      }
+
+      const sY = Math.min(startY, endY);
+      const eY = Math.max(startY, endY);
+
+      const rate = num('rate') / 100;
+      const wr = num('wr') / 100;
+      const wrStart = intv('wrStart');
+      const wrMode = document.getElementById('wrMode').value;
+      const initial = num('initial');
+      const defM = num('defaultMonthly');
+      const defA = num('defaultAnnual');
+
+      // Re-render segments pour adapter min/max des curseurs
+      renderSegments();
+
+      // Vérif retrait
+      if(wrStart < sY || wrStart > eY){
+        // pas d'alert agressif, juste un fallback calme
+        // on garde mais on n'applique pas de retrait si hors plage
+      }
+
+      let vt = initial;
+      const monthlyRate = rate / 12;
+
+      // Mode percentBase : calcul du capital au moment wrStart
+      let vtWrBase = null;
+      if(wrMode === 'percentBase' && (wrStart >= sY && wrStart <= eY)){
+        let tmp = initial;
+        for(let y = sY; y <= eY; y++){
+          const mContr = monthlyForYear(y, defM);
+          for(let m = 0; m < 12; m++){
+            tmp = tmp * (1 + monthlyRate) + mContr;
+          }
+          tmp += annualForYear(y, defA);
+          if(y === wrStart){
+            vtWrBase = tmp;
+            break;
+          }
+        }
+      }
+
+      const annualWithdrawalBase = vtWrBase != null ? vtWrBase * wr : null;
+
+      const years = [];
+      const vals = [];
+      const withdrawals = [];
+
+      for(let y = sY; y <= eY; y++){
+        const mContr = monthlyForYear(y, defM);
+        for(let m = 0; m < 12; m++){
+          vt = vt * (1 + monthlyRate) + mContr;
+        }
+
+        vt += annualForYear(y, defA);
+
+        let thisWithdrawal = 0;
+        if(y >= wrStart && wrStart >= sY && wrStart <= eY){
+          if(wrMode === 'percentBase' && annualWithdrawalBase != null){
+            thisWithdrawal = annualWithdrawalBase;
+          } else {
+            thisWithdrawal = vt * wr; // percentCurrent
+          }
+          vt -= thisWithdrawal;
+        }
+
+        years.push(y);
+        vals.push(vt);
+        withdrawals.push(thisWithdrawal);
+      }
+
+      ensureChart();
+      chart.data.labels = years;
+      chart.data.datasets[0].data = vals.map(v => v / 1000);
+      chart.data.datasets[1].data = withdrawals.map(v => v / 1000);
+      chart.update();
+
+      const final = vals[vals.length - 1] || 0;
+      const lastW = withdrawals[withdrawals.length - 1] || 0;
+
+      document.getElementById('summary').textContent =
+        `Capital en ${eY} : ${final.toFixed(0)} CHF • Retrait annuel (dernière année) : ${lastW.toFixed(0)} CHF (~${(lastW/12).toFixed(0)} /mois)`;
+    }
+
+    // -----------------------------
+    // Auto-update (sans bouton)
+    // -----------------------------
+    const ids = [
+      'startYear','endYear','rate','wrMode','wr','wrStart','initial','defaultMonthly','defaultAnnual'
+    ];
+    ids.forEach(id => {
+      document.getElementById(id).addEventListener('input', scheduleSim);
+      document.getElementById(id).addEventListener('change', scheduleSim);
+    });
+
+    // Init
+    renderSegments();
+    runSim();
   </script>
 </body>
 </html>

@@ -2,347 +2,15 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Simulateur FIRE – VT & Retraits</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simulateur FIRE – VT & Retraits</title>
+  <meta name="description" content="Simulateur FIRE simplifié : contributions par segments, capital VT, retraits dynamiques ou basés sur l'année de départ." />
 
-  <style>
-    :root{
-      --bg0:#020617;
-      --bg1:#050b1a;
-      --bg2:#070a1f;
+  <link rel="stylesheet" href="./assets/css/styles.css" />
 
-      --glass: rgba(15, 23, 42, 0.58);
-      --stroke: rgba(148, 163, 184, 0.22);
-
-      --text:#e5e7eb;
-      --muted:#9ca3af;
-
-      --aqua:#22d3ee;
-      --violet:#a855f7;
-      --rose:#fb7185;
-
-      --shadow: 0 18px 40px rgba(15, 23, 42, 0.75);
-      --radius-xl: 22px;
-      --radius-lg: 16px;
-      --radius-md: 12px;
-      --ease: cubic-bezier(.2,.8,.2,1);
-    }
-
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
-
-    body{
-      margin:0;
-      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-      color:var(--text);
-      background:
-        radial-gradient(1200px 800px at 20% 10%, #0b1a3a 0%, transparent 55%),
-        radial-gradient(900px 700px at 85% 20%, rgba(168,85,247,0.22) 0%, transparent 60%),
-        radial-gradient(900px 700px at 70% 85%, rgba(34,211,238,0.18) 0%, transparent 60%),
-        linear-gradient(180deg, var(--bg1), var(--bg0) 55%, var(--bg2));
-      overflow-x:hidden;
-    }
-
-    body::after{
-      content:"";
-      position:fixed; inset:0;
-      pointer-events:none;
-      opacity:.06;
-      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
-      mix-blend-mode: overlay;
-    }
-
-    .topbar{
-      max-width: 1600px;
-      margin: 18px auto 10px;
-      padding: 0 16px;
-    }
-    .title{
-      margin:0;
-      font-size: 1.35rem;
-      letter-spacing:.02em;
-    }
-    .title span{
-      background: linear-gradient(120deg, var(--aqua), var(--violet));
-      -webkit-background-clip:text;
-      color:transparent;
-    }
-
-    /* LAYOUT PRINCIPAL : graph prend le max */
-    .app{
-      max-width: 1600px;
-      margin: 0 auto 20px;
-      padding: 0 16px 16px;
-      display:grid;
-      grid-template-columns: minmax(0, 1fr) clamp(300px, 28vw, 420px); /* graph flexible + panel responsive */
-      gap: 16px;
-      align-items: stretch;
-      min-height: calc(100vh - 86px); /* occupe l'écran */
-    }
-    @media (max-width: 1080px){
-      .app{ grid-template-columns: 1fr; }
-    }
-
-    .glass{
-      border-radius: var(--radius-xl);
-      background: linear-gradient(180deg, rgba(15,23,42,0.62), rgba(15,23,42,0.48));
-      border: 1px solid var(--stroke);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      overflow:hidden;
-    }
-
-    .center, .panel{ padding: 14px 14px 16px; }
-
-    /* CENTRE = colonne flex, chart prend le restant */
-    .center{
-      display:flex;
-      flex-direction:column;
-      min-height: calc(100vh - 86px);
-    }
-
-    .sectionTitle{
-      margin: 0 0 8px;
-      font-size: .98rem;
-      display:flex;
-      align-items:center;
-      gap:8px;
-    }
-    .bar{
-      width:7px; height:18px;
-      border-radius: 999px;
-      background: linear-gradient(180deg, var(--aqua), var(--violet));
-      box-shadow: 0 0 18px rgba(34,211,238,0.20);
-    }
-
-    .chartWrap{
-      margin-top: 10px;
-      border-radius: var(--radius-xl);
-      border: 1px solid rgba(148,163,184,0.14);
-      background: rgba(2,6,23,0.20);
-      padding: 10px;
-      box-shadow: 0 22px 70px rgba(0,0,0,0.45);
-      overflow:hidden;
-      flex: 1;                 /* <-- prend l'espace dispo */
-      min-height: 340px;       /* sécurité */
-    }
-
-    /* IMPORTANT : le canvas remplit le conteneur */
-    #chart{
-      width:100% !important;
-      height:100% !important;
-      max-height:none !important;
-      display:block;
-    }
-
-    .statusRow{
-      margin-top: 10px;
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      align-items:center;
-      justify-content:space-between;
-    }
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding: 6px 10px;
-      border-radius:999px;
-      border: 1px solid rgba(148,163,184,0.18);
-      background: rgba(2,6,23,0.26);
-      color: var(--muted);
-      font-size:.78rem;
-    }
-    .dot{
-      width:7px; height:7px;
-      border-radius:999px;
-      background: var(--aqua);
-      box-shadow: 0 0 16px rgba(34,211,238,0.35);
-    }
-    .danger{ color: var(--rose); font-weight: 650; }
-
-    /* PANEL : sticky + scroll indépendant sur desktop */
-    .panel{
-      position: sticky;
-      top: 12px;
-      max-height: calc(100vh - 24px);
-      overflow: auto;
-    }
-    @media (max-width: 1080px){
-      .center{ min-height: calc(100vh - 86px); }
-      .panel{
-        position: relative;
-        top: auto;
-        max-height: none;
-        overflow: visible;
-      }
-    }
-
-    label{
-      display:block;
-      margin-top: 10px;
-      font-size: .78rem;
-      color: var(--muted);
-    }
-    input[type="number"], select{
-      width:100%;
-      margin-top: 5px;
-      padding: 9px 10px;
-      border-radius: var(--radius-md);
-      border: 1px solid rgba(148,163,184,0.28);
-      background: rgba(2,6,23,0.35);
-      color: var(--text);
-      outline:none;
-      transition: box-shadow .25s var(--ease), border-color .25s var(--ease), transform .25s var(--ease);
-    }
-    input[type="number"]:focus, select:focus{
-      border-color: rgba(34,211,238,0.55);
-      box-shadow: 0 0 0 2px rgba(34,211,238,0.14);
-      transform: translateY(-1px);
-    }
-
-    .grid2{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
-    }
-    @media (max-width:1080px){
-      .grid2{ grid-template-columns: 1fr; }
-    }
-
-    /* Segments */
-    .segments{
-      margin-top: 10px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-    .segment{
-      border-radius: var(--radius-xl);
-      border: 1px solid rgba(148,163,184,0.16);
-      background: rgba(2,6,23,0.20);
-      padding: 10px;
-      transition: transform .25s var(--ease), border-color .25s var(--ease), box-shadow .25s var(--ease);
-    }
-    .segment:hover{
-      transform: translateY(-1px);
-      border-color: rgba(34,211,238,0.28);
-      box-shadow: 0 0 0 1px rgba(34,211,238,0.10), 0 16px 40px rgba(0,0,0,0.40);
-    }
-    .segTop{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom: 8px;
-    }
-    .segTitle{
-      font-size:.86rem;
-      display:flex;
-      align-items:center;
-      gap:8px;
-    }
-    .segTitle em{
-      font-style:normal;
-      color: var(--muted);
-      font-size:.78rem;
-    }
-
-    .iconBtn{
-      border: 1px solid rgba(148,163,184,0.18);
-      background: rgba(2,6,23,0.24);
-      color: var(--text);
-      border-radius: 999px;
-      padding: 6px 10px;
-      cursor:pointer;
-      transition: transform .2s var(--ease), border-color .2s var(--ease), box-shadow .2s var(--ease);
-      font-size:.8rem;
-    }
-    .iconBtn:hover{
-      transform: translateY(-1px);
-      border-color: rgba(251,113,133,0.35);
-      box-shadow: 0 0 0 1px rgba(251,113,133,0.10);
-    }
-
-    /* Dual range */
-    .rangeBox{
-      margin-top: 6px;
-      border-radius: var(--radius-lg);
-      border: 1px solid rgba(148,163,184,0.14);
-      background: rgba(2,6,23,0.18);
-      padding: 10px;
-    }
-    .rangeLabels{
-      display:flex;
-      justify-content:space-between;
-      color: var(--muted);
-      font-size:.76rem;
-      margin-bottom: 6px;
-    }
-    .dual{
-      position:relative;
-      height: 28px;
-    }
-    .dual input[type="range"]{
-      position:absolute;
-      left:0; right:0;
-      width:100%;
-      margin:0;
-      top: 8px;
-      pointer-events:none;
-      -webkit-appearance:none;
-      background:transparent;
-      height: 6px;
-    }
-    .dual input[type="range"]::-webkit-slider-thumb{
-      -webkit-appearance:none;
-      pointer-events:auto;
-      width: 16px; height: 16px;
-      border-radius: 999px;
-      border: 1px solid rgba(148,163,184,0.30);
-      background:
-        radial-gradient(circle at 30% 30%, rgba(255,255,255,0.22), rgba(255,255,255,0) 55%),
-        linear-gradient(120deg, rgba(34,211,238,0.95), rgba(168,85,247,0.95));
-      box-shadow: 0 10px 22px rgba(0,0,0,0.45), 0 0 18px rgba(34,211,238,0.25);
-    }
-    .track{
-      position:absolute;
-      left:0; right:0;
-      top: 10px;
-      height: 6px;
-      border-radius:999px;
-      background: rgba(148,163,184,0.14);
-      overflow:hidden;
-    }
-    .track .fill{
-      position:absolute;
-      top:0; bottom:0;
-      background: linear-gradient(90deg, rgba(34,211,238,0.55), rgba(168,85,247,0.55));
-      box-shadow: inset 0 0 0 1px rgba(34,211,238,0.14);
-    }
-
-    .addBtn{
-      margin-top: 10px;
-      width:100%;
-      border:none;
-      border-radius: 999px;
-      padding: 10px 12px;
-      cursor:pointer;
-      color: #020617;
-      font-weight: 750;
-      background: linear-gradient(120deg, var(--aqua), var(--violet));
-      box-shadow: 0 16px 42px rgba(34,211,238,0.22);
-      transition: transform .25s var(--ease), box-shadow .25s var(--ease);
-    }
-    .addBtn:hover{
-      transform: translateY(-1px);
-      box-shadow: 0 22px 60px rgba(34,211,238,0.25);
-    }
-  </style>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js doit être chargé AVANT app.js. defer respecte l'ordre -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  <script type="module" src="./assets/js/app.js"></script>
 </head>
 
 <body>
@@ -354,6 +22,7 @@
     <!-- Colonne centrale (graph) -->
     <main class="glass center">
       <h2 class="sectionTitle"><span class="bar"></span> Courbe du capital</h2>
+
       <div class="chartWrap">
         <canvas id="chart"></canvas>
       </div>
@@ -362,6 +31,10 @@
         <div class="pill"><span class="dot"></span><span id="summary">—</span></div>
         <div class="pill danger">Simulation simplifiée — pas un conseil financier.</div>
       </div>
+
+      <noscript>
+        <p class="noscript">Active JavaScript pour utiliser le simulateur.</p>
+      </noscript>
     </main>
 
     <!-- Colonne droite (paramètres) -->
@@ -369,376 +42,43 @@
       <h2 class="sectionTitle"><span class="bar"></span> Paramètres</h2>
 
       <div class="grid2">
-        <label>Année de début
+        <label for="startYear">Année de début
           <input id="startYear" type="number" value="2025" min="1900" max="2200" />
         </label>
-        <label>Année de fin
+        <label for="endYear">Année de fin
           <input id="endYear" type="number" value="2060" min="1900" max="2200" />
         </label>
       </div>
 
       <div class="grid2">
-        <label>Rendement annuel (%)
+        <label for="rate">Rendement annuel (%)
           <input id="rate" type="number" step="0.1" value="5" />
         </label>
-        <label>Capital initial (CHF)
+        <label for="initial">Capital initial (CHF)
           <input id="initial" type="number" value="0" step="1000" />
         </label>
       </div>
 
       <div class="grid2">
-        <label>Mode de retrait
+        <label for="wrMode">Mode de retrait
           <select id="wrMode">
             <option value="percentCurrent">% du capital chaque année (dynamique)</option>
             <option value="percentBase">% du capital à l'année de départ (montant fixe)</option>
           </select>
         </label>
-        <label>Taux de retrait (%)
+        <label for="wr">Taux de retrait (%)
           <input id="wr" type="number" step="0.1" value="3.5" />
         </label>
       </div>
 
-      <label>Année début des retraits
+      <label for="wrStart">Année début des retraits
         <input id="wrStart" type="number" value="2043" min="1900" max="2200" />
       </label>
 
-      <h2 class="sectionTitle" style="margin-top:14px;"><span class="bar"></span> Segments</h2>
+      <h2 class="sectionTitle sectionTitle--spaced"><span class="bar"></span> Segments</h2>
       <div id="segments" class="segments"></div>
       <button class="addBtn" type="button" id="addSegment">＋ Ajouter un segment</button>
     </aside>
   </div>
-
-  <script>
-    // UUID fallback (compat)
-    const uuid = () =>
-      (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
-      : ('id-' + Math.random().toString(16).slice(2) + Date.now().toString(16));
-
-    // -----------------------------
-    // State : segments (plages)
-    // -----------------------------
-    let segments = [
-      { id: uuid(), from: 2025, to: 2039, monthly: 3340, annual: 7500 },
-      { id: uuid(), from: 2040, to: 2060, monthly: 0, annual: 0 }
-    ];
-
-    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-    const num = (id) => {
-      const el = document.getElementById(id);
-      if (!el) return 0;
-      return parseFloat(el.value) || 0;
-    };
-    const intv = (id) => {
-      const el = document.getElementById(id);
-      if (!el) return 0;
-      return parseInt(el.value, 10);
-    };
-
-    // Debounce : tout dynamique, mais calme
-    let t = null;
-    function scheduleSim(){
-      if(t) clearTimeout(t);
-      t = setTimeout(runSim, 80);
-    }
-
-    // -----------------------------
-    // Règle segment : dernier segment gagne
-    // -----------------------------
-    function getRuleForYear(year){
-      for(let i = segments.length - 1; i >= 0; i--){
-        const s = segments[i];
-        if(year >= s.from && year <= s.to) return s;
-      }
-      return null;
-    }
-    function monthlyForYear(year){
-      const r = getRuleForYear(year);
-      return r ? (parseFloat(r.monthly) || 0) : 0;
-    }
-    function annualForYear(year){
-      const r = getRuleForYear(year);
-      return r ? (parseFloat(r.annual) || 0) : 0;
-    }
-
-    // -----------------------------
-    // UI : render segments
-    // -----------------------------
-    function renderSegments(){
-      const wrap = document.getElementById('segments');
-      wrap.innerHTML = '';
-
-      const startY = clamp(intv('startYear'), 1900, 2200);
-      const endY   = clamp(intv('endYear'),   1900, 2200);
-      const minY = Math.min(startY, endY);
-      const maxY = Math.max(startY, endY);
-
-      segments.forEach((s, idx) => {
-        const el = document.createElement('div');
-        el.className = 'segment';
-
-        el.innerHTML = `
-          <div class="segTop">
-            <div class="segTitle">Segment ${idx+1} <em>(${s.from} → ${s.to})</em></div>
-            <button class="iconBtn" type="button" data-del="${s.id}">Supprimer</button>
-          </div>
-
-          <div class="rangeBox">
-            <div class="rangeLabels">
-              <span>De : <strong id="fromLabel-${s.id}">${s.from}</strong></span>
-              <span>À : <strong id="toLabel-${s.id}">${s.to}</strong></span>
-            </div>
-
-            <div class="dual">
-              <div class="track"><div class="fill" id="fill-${s.id}"></div></div>
-              <input type="range" min="${minY}" max="${maxY}" value="${s.from}" step="1" data-range="from" data-id="${s.id}">
-              <input type="range" min="${minY}" max="${maxY}" value="${s.to}"   step="1" data-range="to"   data-id="${s.id}">
-            </div>
-          </div>
-
-          <div class="grid2" style="margin-top:8px;">
-            <label>Mensuel (CHF)
-              <input type="number" step="50" value="${s.monthly}" data-field="monthly" data-id="${s.id}">
-            </label>
-            <label>Annuel (CHF)
-              <input type="number" step="100" value="${s.annual}" data-field="annual" data-id="${s.id}">
-            </label>
-          </div>
-        `;
-
-        wrap.appendChild(el);
-        updateFillForSegment(s.id, minY, maxY);
-      });
-
-      // Supprimer segment
-      wrap.querySelectorAll('button[data-del]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.del;
-          segments = segments.filter(s => s.id !== id);
-          renderSegments();
-          scheduleSim();
-        });
-      });
-
-      // Sliders
-      wrap.querySelectorAll('input[type="range"]').forEach(r => {
-        r.addEventListener('input', () => {
-          const id = r.dataset.id;
-          const kind = r.dataset.range;
-          const seg = segments.find(x => x.id === id);
-          if(!seg) return;
-
-          const v = parseInt(r.value, 10);
-          if(kind === 'from') seg.from = v;
-          if(kind === 'to')   seg.to   = v;
-
-          // Garantit from <= to
-          if(seg.from > seg.to){
-            const tmp = seg.from; seg.from = seg.to; seg.to = tmp;
-          }
-
-          document.getElementById(`fromLabel-${id}`).textContent = seg.from;
-          document.getElementById(`toLabel-${id}`).textContent   = seg.to;
-
-          updateFillForSegment(id, minY, maxY);
-          scheduleSim();
-        });
-      });
-
-      // Inputs mensuel/annuel
-      wrap.querySelectorAll('input[type="number"][data-field]').forEach(inp => {
-        inp.addEventListener('input', () => {
-          const id = inp.dataset.id;
-          const field = inp.dataset.field;
-          const seg = segments.find(x => x.id === id);
-          if(!seg) return;
-          seg[field] = parseFloat(inp.value) || 0;
-          scheduleSim();
-        });
-      });
-    }
-
-    function updateFillForSegment(id, minY, maxY){
-      const seg = segments.find(s => s.id === id);
-      const fill = document.getElementById(`fill-${id}`);
-      if(!seg || !fill) return;
-
-      const span = Math.max(1, maxY - minY);
-      const left = ((seg.from - minY) / span) * 100;
-      const right = 100 - ((seg.to - minY) / span) * 100;
-
-      fill.style.left = `${clamp(left, 0, 100)}%`;
-      fill.style.right = `${clamp(right, 0, 100)}%`;
-    }
-
-    // Ajouter segment : copie les montants du dernier segment (pas de default)
-    document.getElementById('addSegment').addEventListener('click', () => {
-      const startY = clamp(intv('startYear'), 1900, 2200);
-      const endY   = clamp(intv('endYear'),   1900, 2200);
-      const minY = Math.min(startY, endY);
-      const maxY = Math.max(startY, endY);
-
-      const last = segments.length ? segments[segments.length - 1] : null;
-
-      segments.push({
-        id: uuid(),
-        from: minY,
-        to: maxY,
-        monthly: last ? (parseFloat(last.monthly) || 0) : 0,
-        annual:  last ? (parseFloat(last.annual)  || 0) : 0
-      });
-
-      renderSegments();
-      scheduleSim();
-    });
-
-    // -----------------------------
-    // Chart
-    // -----------------------------
-    let chart = null;
-
-    function ensureChart(){
-      if(chart) return;
-
-      const ctx = document.getElementById('chart').getContext('2d');
-      chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: [],
-          datasets: [
-            {
-              label: 'Capital (kCHF)',
-              data: [],
-              borderColor: 'rgba(34, 211, 238, 1)',
-              backgroundColor: 'rgba(34, 211, 238, 0.08)',
-              tension: 0.22,
-              fill: true,
-              pointRadius: 0
-            },
-            {
-              label: 'Retrait annuel (kCHF)',
-              data: [],
-              borderColor: 'rgba(148, 163, 184, 0.95)',
-              borderDash: [6, 4],
-              tension: 0.15,
-              pointRadius: 0,
-              fill: false
-            },
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false, // <-- clé pour que le canvas remplisse .chartWrap
-          interaction: { mode: 'index', intersect: false },
-          plugins: {
-            legend: { labels: { color: '#e5e7eb', font: { size: 11 } } },
-            tooltip: {
-              backgroundColor: 'rgba(2,6,23,0.85)',
-              borderColor: 'rgba(148,163,184,0.25)',
-              borderWidth: 1,
-              titleColor: '#e5e7eb',
-              bodyColor: '#e5e7eb'
-            }
-          },
-          scales: {
-            y: {
-              title: { display: true, text: 'kCHF', color: '#9ca3af' },
-              ticks: { color: '#9ca3af' },
-              grid: { color: 'rgba(55,65,81,0.35)' }
-            },
-            x: {
-              title: { display: true, text: 'Année', color: '#9ca3af' },
-              ticks: { color: '#9ca3af' },
-              grid: { color: 'rgba(31,41,55,0.45)' }
-            }
-          }
-        }
-      });
-    }
-
-    // -----------------------------
-    // Simulation
-    // -----------------------------
-    function runSim(){
-      const startY = clamp(intv('startYear'), 1900, 2200);
-      const endY   = clamp(intv('endYear'),   1900, 2200);
-
-      const sY = Math.min(startY, endY);
-      const eY = Math.max(startY, endY);
-
-      const rate = num('rate') / 100;
-      const wr = num('wr') / 100;
-      const wrStart = intv('wrStart');
-      const wrMode = document.getElementById('wrMode').value;
-
-      const initial = num('initial');
-
-      let vt = initial;
-      const monthlyRate = rate / 12;
-
-      // percentBase : calc du capital à wrStart
-      let vtWrBase = null;
-      if(wrMode === 'percentBase' && wrStart >= sY && wrStart <= eY){
-        let tmp = initial;
-        for(let y = sY; y <= eY; y++){
-          const mContr = monthlyForYear(y);
-          for(let m = 0; m < 12; m++) tmp = tmp * (1 + monthlyRate) + mContr;
-          tmp += annualForYear(y);
-          if(y === wrStart){ vtWrBase = tmp; break; }
-        }
-      }
-      const annualWithdrawalBase = (vtWrBase != null) ? vtWrBase * wr : null;
-
-      const years = [];
-      const vals = [];
-      const withdrawals = [];
-
-      for(let y = sY; y <= eY; y++){
-        const mContr = monthlyForYear(y);
-        for(let m = 0; m < 12; m++) vt = vt * (1 + monthlyRate) + mContr;
-        vt += annualForYear(y);
-
-        let w = 0;
-        if(wrStart >= sY && wrStart <= eY && y >= wrStart){
-          w = (wrMode === 'percentBase' && annualWithdrawalBase != null)
-              ? annualWithdrawalBase
-              : vt * wr;
-          vt -= w;
-        }
-
-        years.push(y);
-        vals.push(vt);
-        withdrawals.push(w);
-      }
-
-      ensureChart();
-      chart.data.labels = years;
-      chart.data.datasets[0].data = vals.map(v => v/1000);
-      chart.data.datasets[1].data = withdrawals.map(v => v/1000);
-      chart.update();
-
-      const final = vals.length ? vals[vals.length - 1] : 0;
-      const lastW = withdrawals.length ? withdrawals[withdrawals.length - 1] : 0;
-
-      document.getElementById('summary').textContent =
-        `Capital en ${eY} : ${final.toFixed(0)} CHF • Retrait annuel (dernière année) : ${lastW.toFixed(0)} CHF (~${(lastW/12).toFixed(0)} /mois)`;
-    }
-
-    // Auto-update (aucun bouton)
-    const ids = ['startYear','endYear','rate','wrMode','wr','wrStart','initial'];
-    ids.forEach(id => {
-      document.getElementById(id).addEventListener('input', () => {
-        if(id === 'startYear' || id === 'endYear') renderSegments(); // maj min/max des sliders
-        scheduleSim();
-      });
-      document.getElementById(id).addEventListener('change', () => {
-        if(id === 'startYear' || id === 'endYear') renderSegments();
-        scheduleSim();
-      });
-    });
-
-    // Init
-    renderSegments();
-    runSim();
-  </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-import { clamp } from './state.js';
+import { clamp } from "./state.js";
 
 export function computeMinMaxYears(startYear, endYear) {
   const minY = Math.min(startYear, endYear);
@@ -7,7 +7,7 @@ export function computeMinMaxYears(startYear, endYear) {
 }
 
 export function updateFillForSegment(segments, id, minY, maxY) {
-  const seg = segments.find(s => s.id === id);
+  const seg = segments.find((s) => s.id === id);
   const fill = document.getElementById(`fill-${id}`);
   if (!seg || !fill) return;
 
@@ -25,14 +25,15 @@ export function renderSegments({
   minY,
   maxY,
   onDelete,
-  onRangeInput,
-  onFieldInput
+  onRangeInput,   // live UI only
+  onRangeChange,  // commit -> triggers sim
+  onFieldInput,
 }) {
-  wrapEl.innerHTML = '';
+  wrapEl.innerHTML = "";
 
   segments.forEach((s, idx) => {
-    const el = document.createElement('div');
-    el.className = 'segment';
+    const el = document.createElement("div");
+    el.className = "segment";
 
     el.innerHTML = `
       <div class="segTop">
@@ -68,17 +69,20 @@ export function renderSegments({
   });
 
   // delete
-  wrapEl.querySelectorAll('button[data-del]').forEach(btn => {
-    btn.addEventListener('click', () => onDelete(btn.dataset.del));
+  wrapEl.querySelectorAll('button[data-del]').forEach((btn) => {
+    btn.addEventListener("click", () => onDelete(btn.dataset.del));
   });
 
-  // range
-  wrapEl.querySelectorAll('input[type="range"]').forEach(r => {
-    r.addEventListener('input', () => onRangeInput(r));
+  // range (live + commit)
+  wrapEl.querySelectorAll('input[type="range"]').forEach((r) => {
+    r.addEventListener("input", () => onRangeInput(r));
+    r.addEventListener("change", () => onRangeChange(r));
   });
 
   // number fields
-  wrapEl.querySelectorAll('input[type="number"][data-field]').forEach(inp => {
-    inp.addEventListener('input', () => onFieldInput(inp));
-  });
+  wrapEl
+    .querySelectorAll('input[type="number"][data-field]')
+    .forEach((inp) => {
+      inp.addEventListener("input", () => onFieldInput(inp));
+    });
 }

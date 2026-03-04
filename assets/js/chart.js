@@ -87,7 +87,7 @@ export function updateChart(chart, { years, capitalCHF, withdrawalsCHF }, pivotY
   chart.data.labels = years;
 
   const past = years.map((y, i) => (y <= pivotYear ? capitalCHF[i] / 1000 : null));
-  const future = years.map((y, i) => (y > pivotYear ? capitalCHF[i] / 1000 : null));
+  const future = years.map((y, i) => (y >= pivotYear ? capitalCHF[i] / 1000 : null));
   const w = withdrawalsCHF.map(v => v / 1000);
 
   chart.data.datasets[0].data = past;
